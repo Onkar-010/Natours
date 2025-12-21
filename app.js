@@ -67,10 +67,12 @@ const AppErrors = require("./utils/appErrors.js");
 const GlobalErrorHandler = require("./controllers/errorController.js");
 const tourRouter = require("./routes/tourRouters.js");
 const userRouter = require("./routes/userRouters.js");
+const reviewRouter = require("./routes/reviewRouter.js");
 
 //Mouted Router's
 app.use(`/api/v1/tours`, tourRouter);
 app.use(`/api/v1/users`, userRouter);
+app.use(`/api/v1/review`, reviewRouter);
 
 //Route Handeler for Uncaught Routes
 app.all(`*`, (req, res, next) => {

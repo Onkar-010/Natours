@@ -2,6 +2,7 @@
 const User = require("./../models/userModel");
 const catchAsync = require(`./../utils/catchAsync.js`);
 const AppErrors = require(`./../utils/appErrors.js`);
+const factory = require("./../controllers/handlerFactory.js");
 
 const filterObj = (reqBodyObj, ...allowedFields) => {
   const newObj = {};
@@ -14,17 +15,11 @@ const filterObj = (reqBodyObj, ...allowedFields) => {
 };
 
 //User's Route Handler
-exports.getAllUsers = catchAsync(async (req, res) => {
-  //Executing Query
-  const users = await User.find();
-  res.status(200).json({
-    status: "success",
-    results: users.length,
-    data: {
-      users: users,
-    },
-  });
-});
+exports.getMe = (req, res, next) => {
+  //get the id and stroe in params
+  if (!req.params.id) req.params.id = req.user._id;
+  next();
+};
 
 exports.updateMe = catchAsync(async (req, res, next) => {
   //create an Error if he tries to Update the Password
@@ -70,64 +65,8 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createAUser = (req, res) => {
-  // setting up newtour
-  const newId = tours[tours.length - 1].id + 1;
-  const newTour = Object.assign({ id: newId }, req.body);
-
-  res.status(500).json({
-    status: "success",
-    message: "Internal Server Failer",
-  });
-};
-
-exports.getAUser = (req, res) => {
-  // Formatting params
-  const id = req.params.id * 1;
-
-  //Wrong id
-  if (id > tours.length) {
-    return res.status(404).json({
-      status: "fail",
-      message: "Invalid ID",
-    });
-  }
-  res.status(500).json({
-    status: "success",
-    message: "Internal Server Failer",
-  });
-};
-
-exports.updateAUser = (req, res) => {
-  // Formatting params
-  const id = req.params.id * 1;
-
-  //Wrong id
-  if (id > tours.length) {
-    return res.status(404).json({
-      status: "fail",
-      message: "Invalid ID",
-    });
-  }
-  res.status(500).json({
-    status: "success",
-    message: "Internal Server Failer",
-  });
-};
-
-exports.deleteAUser = (req, res) => {
-  // Formatting params
-  const id = req.params.id * 1;
-
-  //Wrong id
-  if (id > tours.length) {
-    return res.status(404).json({
-      status: "fail",
-      message: "Invalid ID",
-    });
-  }
-  res.status(204).json({
-    status: "success",
-    data: null,
-  });
-};
+// exports.createAUser = factory.createOne(User); Use Sign UP Instead
+exports.getAllUsers = factory.getAll(User);
+exports.getAUser = factory.getOne(User);
+exports.updateAUser = factory.updateOne(User);
+exports.deleteAUser = factory.deleteOne(User);
