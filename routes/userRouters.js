@@ -7,7 +7,6 @@ const authController = require("./../controllers/authController");
 
 //Creating a Mini Application
 const router = express.Router();
-console.log("Inside the UserRouter");
 router.route("/signup").post(authController.signUp);
 router.route("/login").post(authController.login);
 

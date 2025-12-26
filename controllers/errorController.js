@@ -49,7 +49,6 @@ const sendErrorDev = (err, req, res) => {
 const sendErrorProd = (err, req, res) => {
   //API
 
-  console.log("1");
   if (req.originalUrl.startsWith("/api")) {
     if (err.isOperational) {
       return res.status(err.statusCode).json({
@@ -59,7 +58,6 @@ const sendErrorProd = (err, req, res) => {
         errstack: err.stack,
       });
     }
-    console.log("2");
 
     //Log error fro Programmer
     console.log(`ERROR 💥`, err);

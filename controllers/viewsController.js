@@ -65,7 +65,6 @@ exports.getMyBookings = catchAsync(async (req, res, next) => {
 });
 
 exports.updateUserData = catchAsync(async (req, res, next) => {
-  console.log("hello inside Update USer Data");
   const updatedUser = await User.findByIdAndUpdate(
     req.user.id,
     {

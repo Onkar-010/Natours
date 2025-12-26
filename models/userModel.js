@@ -86,9 +86,7 @@ userSchema.methods.comparePassword = async (
   candidatePassword,
   userPassword
 ) => {
-  console.log(candidatePassword, userPassword);
   const isCorrect = await bcrypt.compare(candidatePassword, userPassword);
-  console.log(isCorrect);
   return isCorrect;
 };
 
@@ -98,7 +96,7 @@ userSchema.methods.CheckPasswordChangeAfter = function (JwtTimeStamp) {
       this.passwordChangedAt.getTime() / 1000,
       10
     );
-    console.log(JwtTimeStamp, changePassword);
+
     if (changePassword) {
       return JwtTimeStamp < changePassword;
     }
@@ -119,7 +117,6 @@ userSchema.methods.createPasswordResetToken = function () {
     .digest("hex");
 
   this.resetPasswordTokenExpiresIn = Date.now() + 10 * 60 * 1000;
-  console.log(resetToken, this.resetPasswordToken);
 
   //REturn the ResetToken to AuthController
   return resetToken;

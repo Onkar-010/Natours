@@ -50,7 +50,6 @@ exports.signUp = catchAsync(async (req, res, next) => {
   });
 
   const url = `${req.protocol}://${req.get("host")}/me`;
-  console.log(url);
 
   //send welcome Email
   await new Email(newUser, url).sendWelcome();
@@ -61,7 +60,7 @@ exports.signUp = catchAsync(async (req, res, next) => {
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
-  console.log();
+
   //if Email and password Exits
   if (!email || !password)
     return next(new AppErrors("Please Enter the Email and Password"), 400);
@@ -78,19 +77,18 @@ exports.login = catchAsync(async (req, res, next) => {
 });
 
 exports.logout = (req, res) => {
-  console.log("1", req.cookies);
   res.cookie("jwt", "loggedout", {
     expires: new Date(Date.now() + 10 * 1000),
     httpOnly: true,
   });
-  console.log("2", req.cookies);
+
   res.status(200).json({ status: "success" });
 };
 
 exports.protected = catchAsync(async (req, res, next) => {
   //Check if token exits
   let token;
-  console.log("ola", req.cookies);
+
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
@@ -158,7 +156,6 @@ exports.isLoggedIn = catchAsync(async (req, res, next) => {
 
       //
       res.locals.user = currUser;
-      console.log(res.locals.user);
 
       return next();
     } catch (err) {

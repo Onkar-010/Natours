@@ -57,7 +57,7 @@ reviewSchema.statics.calAverageRating = async function (id) {
       },
     },
   ]);
-  console.log(stats);
+
   if (stats.length > 0) {
     await Tour.findByIdAndUpdate(id, {
       ratingQuantity: stats[0].NRating,
@@ -72,7 +72,6 @@ reviewSchema.statics.calAverageRating = async function (id) {
 };
 reviewSchema.index({ user: 1, tour: 1 }, { unique: true });
 reviewSchema.post("save", function () {
-  console.log(this);
   this.constructor.calAverageRating(this.tour);
 });
 

@@ -13,6 +13,7 @@ const xssClean = require("xss-clean");
 const cookieParser = require("cookie-parser");
 const viewRouter = require("./routes/viewRoutes");
 const bookingRouter = require("./routes/bookingRoutes.js");
+const compression = require("compression");
 const hpp = require("hpp");
 
 // Setting up the Application
@@ -94,6 +95,8 @@ app.use(
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
+
+app.use(compression());
 
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();

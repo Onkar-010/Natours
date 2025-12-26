@@ -67,8 +67,7 @@ exports.resizeUploadedImage = catchAsync(async (req, res, next) => {
 
 exports.updateMe = catchAsync(async (req, res, next) => {
   //create an Error if he tries to Update the Password
-  console.log("USer Photo", req.file);
-  console.log("updation data", req.body);
+
   if (req.body.password || req.body.passwordConfirm) {
     return next(
       new AppErrors(

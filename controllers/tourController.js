@@ -17,7 +17,6 @@ exports.aliasTopTours = (req, res, next) => {
 };
 
 exports.getTourWithIn = catchAsync(async (req, res, next) => {
-  console.log(req.params);
   const { distance, latlng, unit } = req.params;
   const [lat, lng] = latlng.split(",");
 
@@ -112,7 +111,6 @@ exports.UploadMultipleTourImage = upload.fields([
   { name: "images", maxCount: 3 },
 ]);
 exports.resizeTourImages = catchAsync(async (req, res, next) => {
-  console.log(req.files);
   if (!req.files.imageCover || !req.files.image) return next();
 
   //ImageCover

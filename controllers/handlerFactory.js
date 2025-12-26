@@ -8,7 +8,6 @@ exports.getAll = (Model) =>
   catchAsync(async (req, res, next) => {
     let filter = {};
     if (req.params.id) filter = { tour: req.params.id };
-    console.log(req.params);
 
     const features = new APIFeatures(Model.find(filter), req.query)
       .filter()
@@ -30,7 +29,7 @@ exports.getAll = (Model) =>
 exports.getOne = (Model, paramOptions) =>
   catchAsync(async (req, res, next) => {
     let query = Model.findById(req.params.id);
-    console.log(req.params.id);
+
     if (paramOptions) query.populate(paramOptions);
     const doc = await query;
 
@@ -47,7 +46,6 @@ exports.getOne = (Model, paramOptions) =>
 
 exports.createOne = (Model) =>
   catchAsync(async (req, res, next) => {
-    console.log(req.body.doc, req.body.user);
     const newDoc = await Model.create(req.body);
     res.status(201).json({
       status: "success",
