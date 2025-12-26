@@ -4,6 +4,8 @@ const Tour = require("./../models/tourModel");
 const catchAsync = require(`./../utils/catchAsync.js`);
 const AppErrors = require(`./../utils/appErrors.js`);
 const factory = require("./../controllers/handlerFactory.js");
+const multer = require("multer");
+const sharp = require("sharp");
 
 //Route Handlers
 
@@ -88,5 +90,59 @@ exports.getDistance = catchAsync(async (req, res, next) => {
 exports.getAllTours = factory.getAll(Tour);
 exports.createATour = factory.createOne(Tour);
 exports.getATour = factory.getOne(Tour, { path: "reviews" });
+
+//-------------Uploading multiple Tour images
+const multerStorage = multer.memoryStorage();
+const multerFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image")) {
+    cb(null, true);
+  } else {
+    cb(
+      new AppErrors("Please Provide an Photo in Image format only!", 400),
+      false
+    );
+  }
+};
+const upload = multer({
+  storage: multerStorage,
+  filter: multerFilter,
+});
+exports.UploadMultipleTourImage = upload.fields([
+  { name: "imageCover", maxCount: 1 },
+  { name: "images", maxCount: 3 },
+]);
+exports.resizeTourImages = catchAsync(async (req, res, next) => {
+  console.log(req.files);
+  if (!req.files.imageCover || !req.files.image) return next();
+
+  //ImageCover
+  req.body.imageCoverfilenmae = `tour-${
+    req.params.id
+  }-${Date.now()}-cover.jpeg`;
+  await sharp(req.files.imageCover[0].buffer)
+    .resize(2000, 1333)
+    .toFormat("jpeg")
+    .jpeg({ quality: 90 })
+    .toFile(`/public/img/tours/${req.body.imageCoverfilename}`);
+
+  //Tour Images
+  req.body.image = [];
+  await Promise.all(
+    req.files.images.map(async (file, i) => {
+      const filename = `tour-${req.user.id}-${Date.now()}-${i + 1}.jpeg`;
+
+      await sharp(file.buffer)
+        .resize(2000, 1333)
+        .toFormat("jpeg")
+        .jpeg({ quality: 90 })
+        .toFile(`/public/img/tours/${filename}`);
+
+      req.body.images.push(filename);
+    })
+  );
+  next();
+});
+//---------------
+
 exports.updateATour = factory.updateOne(Tour);
 exports.deleteATour = factory.deleteOne(Tour);

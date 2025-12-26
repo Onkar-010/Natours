@@ -29,28 +29,60 @@ const handleExpiredJwtToken = () => {
   return new AppErrors("Token Expired! Please Login Again", 401);
 };
 
-const sendErrorDev = (err, res) => {
-  res.status(err.statusCode).json({
-    status: err.status,
-    message: err.message,
-    error: err,
-    errstack: err.stack,
+const sendErrorDev = (err, req, res) => {
+  //API
+  if (req.originalUrl.startsWith("/api")) {
+    return res.status(err.statusCode).json({
+      status: err.status,
+      message: err.message,
+      error: err,
+      errstack: err.stack,
+    });
+  }
+  //REndered
+  return res.status(err.statusCode).render("error", {
+    title: "Something went Wrong!",
+    msg: err.message,
   });
 };
 
-const sendErrorProd = (err, res) => {
+const sendErrorProd = (err, req, res) => {
+  //API
+
+  console.log("1");
+  if (req.originalUrl.startsWith("/api")) {
+    if (err.isOperational) {
+      return res.status(err.statusCode).json({
+        status: err.status,
+        message: err.message,
+        error: err,
+        errstack: err.stack,
+      });
+    }
+    console.log("2");
+
+    //Log error fro Programmer
+    console.log(`ERROR 💥`, err);
+    // for Programming error send generic error to clinet
+    return res.status(500).json({
+      status: "error",
+      message: "Somehting went Wrong!",
+    });
+  }
+
+  //Renderend Websit
   if (err.isOperational) {
-    res.status(err.statusCode).json({
-      status: err.status,
-      message: err.message,
+    return res.status(err.statusCode).render("error", {
+      title: "Something went Wrong!",
+      msg: err.message,
     });
   } else {
     //Log error fro Programmer
     console.log(`ERROR 💥`, err);
     // for Programming error send generic error to clinet
-    res.status(500).json({
-      status: "error",
-      message: "Somehting went Wrong!",
+    return res.status(err.statusCode).render("error", {
+      title: "Something went Wrong!",
+      msg: "Please Try again Later",
     });
   }
 };
@@ -60,9 +92,10 @@ module.exports = (err, req, res, next) => {
   err.status = err.status || `internal Server Error`;
 
   if (process.env.NODE_ENV === `development`) {
-    sendErrorDev(err, res);
+    sendErrorDev(err, req, res);
   } else if (process.env.NODE_ENV === `production`) {
     let error = { ...err };
+    error.message = err.message;
     error.name = err.name;
 
     if (error.name === "CastError") {
@@ -80,6 +113,6 @@ module.exports = (err, req, res, next) => {
     if (err.name === "TokenExpiredError") {
       error = handleExpiredJwtToken();
     }
-    sendErrorProd(error, res);
+    sendErrorProd(error, req, res);
   }
 };

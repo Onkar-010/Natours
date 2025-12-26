@@ -6,6 +6,8 @@ const authController = require("./../controllers/authController");
 
 //Creating a Mini Application
 const router = express.Router({ mergeParams: true });
+console.log("inside Booking route");
+
 router.use(authController.protected);
 router
   .route("/")

@@ -3,10 +3,11 @@
 const User = require("./../models/userModel");
 const catchAsync = require(`./../utils/catchAsync.js`);
 const AppErrors = require(`./../utils/appErrors.js`);
-const sendEmail = require(`./../utils/sendEmail.js`);
+const Email = require(`../utils/sendEmail.js`);
 const jwt = require("jsonwebtoken");
 const { promisify } = require("util");
 const crypto = require("crypto");
+const cookieParser = require("cookie-parser");
 
 const signToken = (id) => {
   return jwt.sign({ id: id }, process.env.JWT_SCERET, {
@@ -16,9 +17,6 @@ const signToken = (id) => {
 
 const createAndSendJwtToken = (user, statusCode, res) => {
   const token = signToken(user._id);
-
-  console.log("Completed SighTOken");
-
   const cookieOptions = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
@@ -51,12 +49,19 @@ exports.signUp = catchAsync(async (req, res, next) => {
     role: req.body.role,
   });
 
+  const url = `${req.protocol}://${req.get("host")}/me`;
+  console.log(url);
+
+  //send welcome Email
+  await new Email(newUser, url).sendWelcome();
+
   //Sending the Web token to the client on signUP
   createAndSendJwtToken(newUser, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
+  console.log();
   //if Email and password Exits
   if (!email || !password)
     return next(new AppErrors("Please Enter the Email and Password"), 400);
@@ -72,14 +77,27 @@ exports.login = catchAsync(async (req, res, next) => {
   createAndSendJwtToken(user, 201, res);
 });
 
+exports.logout = (req, res) => {
+  console.log("1", req.cookies);
+  res.cookie("jwt", "loggedout", {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+  console.log("2", req.cookies);
+  res.status(200).json({ status: "success" });
+};
+
 exports.protected = catchAsync(async (req, res, next) => {
   //Check if token exits
   let token;
+  console.log("ola", req.cookies);
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
   ) {
     token = req.headers.authorization.split(" ")[1];
+  } else if (req.cookies.jwt) {
+    token = req.cookies.jwt;
   }
   if (!token) {
     return next(
@@ -108,6 +126,46 @@ exports.protected = catchAsync(async (req, res, next) => {
 
   //
   req.user = currUser;
+  res.locals.user = currUser;
+  next();
+});
+
+//Only for rendered pages
+
+exports.isLoggedIn = catchAsync(async (req, res, next) => {
+  //Check if token exits
+  if (req.cookies.jwt) {
+    try {
+      let token = req.cookies.jwt;
+
+      //Verifying the Token
+      const decoded = await promisify(jwt.verify)(
+        token,
+        process.env.JWT_SCERET
+      );
+
+      //Check if User Exists
+      const currUser = await User.findById(decoded.id);
+      if (!currUser) {
+        return next();
+      }
+
+      //Check if Your Has Changed there Password after the Token Was issued
+      // @ts-ignore
+      if (currUser.CheckPasswordChangeAfter(decoded.iat)) {
+        return next();
+      }
+
+      //
+      res.locals.user = currUser;
+      console.log(res.locals.user);
+
+      return next();
+    } catch (err) {
+      // If JWT is 'loggedout' or invalid, just move to next middleware
+      return next();
+    }
+  }
   next();
 });
 
@@ -139,11 +197,7 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
   )}/api/v1/users/resetPassword/${resetToken}`;
   const message = `Forget Your Password ? Submit a PATCH Request with Your new Password and Passowrd Confirm to: ${resetUrl},if Yoiu did'n't Forget yout Password Igonre this Email`;
   try {
-    await sendEmail({
-      email: user.email,
-      subject: "Your password ResetToken Expires in 10 Mins",
-      message,
-    });
+    await new Email(user, resetUrl).sendpasswordReset();
 
     res.status(200).json({
       status: "success",
@@ -206,7 +260,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   }
 
   if (!(await user.comparePassword(currPassword, user.password))) {
-    return nexr(
+    return next(
       new AppErrors(
         "Wrong Current Password! Please Enter Correct Password",
         403
